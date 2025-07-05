@@ -794,7 +794,7 @@
                     fromData.append("compoundName", this.compoundName);
 
                     try {
-                        const response = await fetch(`${this.apiUrl}/analyze`, {
+                        const response = await fetch(`${this.apiUrl}/api/analyze`, {
                             method: 'POST',
                             body: fromData
                         });
