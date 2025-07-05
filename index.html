@@ -51,6 +51,7 @@
             position: relative;
             height: 200px;
             background: url('image.png') center/cover;
+            background-color: var(--primary-blue-dark); /* Fallback color */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -746,8 +747,6 @@
         createApp({
             data() {
                 return {
-                    // NOTE: This URL is a placeholder. Replace with your actual API endpoint.
-                    apiUrl: 'https://cellgemma-api-671773368009.us-central1.run.app', 
                     compoundName: '',
                     cellLine: '',
                     concentration: '',
@@ -793,27 +792,12 @@
                     this.addMessage('user', `Starting analysis for: ${this.compoundName}`);
                     this.isTyping = true;
 
-                    const formData = new FormData();
-                    formData.append("file", this.uploadedFile);
-                    formData.append("compoundName", this.compoundName);
-
+                    // --- MOCK API CALL: This simulates a network request. ---
+                    // Replace this block with your actual `fetch` call when your backend is ready.
                     try {
-                        // This is a placeholder fetch. Replace with your actual API endpoint and logic.
-                        // Simulating a network delay for demonstration.
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        const mockResponse = {
-                            success: true,
-                            result: {
-                                description: `Analysis complete for ${this.compoundName}! The morphological profile suggests a strong correlation with compounds affecting the actin cytoskeleton. I can now answer questions about these results. What would you like to know?`
-                            }
-                        };
-                        
-                        if (mockResponse.success) {
-                            this.addMessage('ai', mockResponse.result.description);
-                        } else {
-                           this.addMessage('ai', "Analysis failed. Please check your input and try again.");
-                        }
-
+                        await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate 3s delay
+                        const mockResponseText = `Analysis complete for ${this.compoundName}! The morphological profile suggests a strong correlation with compounds affecting the actin cytoskeleton. I can now answer questions about these results. What would you like to know?`;
+                        this.addMessage('ai', mockResponseText);
                     } catch (error) {
                         console.error('Analysis error:', error);
                         this.addMessage('ai', "An error occurred while analyzing your data. Please check the console for details and try again later.");
@@ -821,6 +805,7 @@
                         this.isAnalyzing = false;
                         this.isTyping = false;
                     }
+                    // --- END MOCK API CALL ---
                 },
                 askQuestion(type) {
                     const questions = {
@@ -868,30 +853,23 @@
                     this.addMessage('user', userMessage);
                     this.userInput = '';
                     
-                    this.$nextTick(() => { this.$refs.chatInput.style.height = 'auto'; }); // Reset textarea height
+                    this.$nextTick(() => { this.$refs.chatInput.style.height = 'auto'; });
 
                     this.isTyping = true;
 
+                    // --- MOCK API CALL: This simulates a network request. ---
+                    // Replace this block with your actual `fetch` call.
                     try {
-                        // This is a placeholder fetch. Replace with your actual API endpoint.
-                        // Simulating a network delay for demonstration.
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                        const mockResponse = {
-                            success: true,
-                            response: `In response to your query about "${userMessage}", the data suggests... [This is a simulated AI response based on your question].`
-                        };
-
-                        if (mockResponse.success) {
-                            this.addMessage('ai', mockResponse.response);
-                        } else {
-                            this.addMessage('ai', 'Sorry, I encountered an error. Please try again.');
-                        }
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate 2s delay
+                        const mockResponseText = `In response to your query about "${userMessage}", the data suggests... [This is a simulated AI response based on your question].`;
+                        this.addMessage('ai', mockResponseText);
                     } catch (error) {
                         console.error('Chat error:', error);
                         this.addMessage('ai', 'Sorry, I cannot connect to the AI service right now. Please try again later.');
                     } finally {
                         this.isTyping = false;
                     }
+                    // --- END MOCK API CALL ---
                 },
                 autoResize() {
                     this.$nextTick(() => {
