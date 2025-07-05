@@ -51,7 +51,6 @@
             position: relative;
             height: 200px;
             background: url('image.png') center/cover;
-            background-color: var(--primary-blue-dark); /* Fallback color */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -628,7 +627,7 @@
                                 </div>
                             </div>
                             
-                            <button @click="startAnalysis" :disabled="!canAnalyze || isAnalyzing" class="analyze-button">
+                            <button @click="startAnalysis" :disabled="!canAnalyze" class="analyze-button">
                                 <span class="material-icons" v-if="!isAnalyzing">psychology</span>
                                 <span class="material-icons" v-if="isAnalyzing" style="animation: spin 1s linear infinite;">autorenew</span>
                                 {{ analyzeButtonText }}
@@ -728,7 +727,7 @@
                                         rows="1"></textarea>
                                     <button 
                                         @click="sendMessage" 
-                                        :disabled="!userInput.trim() || isTyping"
+                                        :disabled="!userInput.trim()"
                                         class="send-button">
                                         <span class="material-icons">send</span>
                                     </button>
@@ -747,6 +746,7 @@
         createApp({
             data() {
                 return {
+                    apiUrl: 'https://cellgemma-api-671773368009.us-central1.run.app',
                     compoundName: '',
                     cellLine: '',
                     concentration: '',
@@ -754,7 +754,6 @@
                     isAnalyzing: false,
                     isTyping: false,
                     hasUploadedFile: false,
-                    uploadedFile: null, // Initialized property
                     showOptional: false,
                     chatMessages: [],
                     messageIdCounter: 0,
@@ -767,8 +766,7 @@
                 },
                 analyzeButtonText() {
                     if (this.isAnalyzing) return 'Analyzing...';
-                    if (!this.canAnalyze && !this.hasUploadedFile) return 'Upload file first';
-                    if (!this.canAnalyze && this.hasUploadedFile) return 'Enter Compound Name';
+                    if (!this.hasUploadedFile) return 'Upload file first';
                     return 'Start Analysis';
                 }
             },
@@ -776,36 +774,48 @@
                 triggerFileUpload() {
                     this.$refs.fileInput.click();
                 },
-                handleFileUpload(event) {
+                async handleFileUpload(event) {
                     const file = event.target.files[0];
                     if (file) {
                         this.hasUploadedFile = true;
-                        this.uploadedFile = file; // Assign file object
                         this.addMessage('user', `Uploaded: ${file.name}`);
-                        this.simulateAIResponse(`Great! I've received your file "${file.name}". Please fill in the compound information and click "Start Analysis".`);
+                        this.uploadedFile = file;
+                        this.simulateAIResponse(`Great! I've received your file "${file.name}". Please fill in the compound information and start the analysis.`);
                     }
                 },
                 async startAnalysis() {
-                    if (!this.canAnalyze || this.isAnalyzing) return;
+                    if (!this.canAnalyze) return;
                     
                     this.isAnalyzing = true;
                     this.addMessage('user', `Starting analysis for: ${this.compoundName}`);
-                    this.isTyping = true;
+                    
+                    const fromData = new FormData();
+                    fromData.append("file", this.uploadedFile);
+                    fromData.append("compoundName", this.compoundName);
 
-                    // --- MOCK API CALL: This simulates a network request. ---
-                    // Replace this block with your actual `fetch` call when your backend is ready.
                     try {
-                        await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate 3s delay
-                        const mockResponseText = `Analysis complete for ${this.compoundName}! The morphological profile suggests a strong correlation with compounds affecting the actin cytoskeleton. I can now answer questions about these results. What would you like to know?`;
-                        this.addMessage('ai', mockResponseText);
+                        const response = await fetch(`${this.apiUrl}/analyze`, {
+                            method: 'POST',
+                            body: fromData
+                        });
+
+                        const results = await response.json();
+
+                        if (response.success) {
+                            this.simulateAIResponse(result.result.description);
+                        } else {
+                            this.simulateAIResponse("Analysis failed. Please check your input and try again.");
+                        }
                     } catch (error) {
-                        console.error('Analysis error:', error);
-                        this.addMessage('ai', "An error occurred while analyzing your data. Please check the console for details and try again later.");
+                        this.simulateAIResponse("An error occurred while analyzing your data. Please try again later.");
                     } finally {
+                        this.isAnalyzing = false;      
+                        }
+
+                    setTimeout(() => {
                         this.isAnalyzing = false;
-                        this.isTyping = false;
-                    }
-                    // --- END MOCK API CALL ---
+                        this.simulateAIResponse(`Analysis complete for ${this.compoundName}! I can now answer questions about your results. What would you like to know?`);
+                    }, 3000);
                 },
                 askQuestion(type) {
                     const questions = {
@@ -841,35 +851,25 @@
                     }, 1500);
                 },
                 scrollToBottom() {
-                    const chatMessagesEl = this.$refs.chatMessages;
-                    if (chatMessagesEl) {
-                        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+                    const chatMessages = this.$refs.chatMessages;
+                    if (chatMessages) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
                     }
                 },
-                async sendMessage() {
-                    if (!this.userInput.trim() || this.isTyping) return;
+                sendMessage() {
+                    if (!this.userInput.trim()) return;
                     
+                    this.addMessage('user', this.userInput);
                     const userMessage = this.userInput;
-                    this.addMessage('user', userMessage);
                     this.userInput = '';
                     
-                    this.$nextTick(() => { this.$refs.chatInput.style.height = 'auto'; });
-
-                    this.isTyping = true;
-
-                    // --- MOCK API CALL: This simulates a network request. ---
-                    // Replace this block with your actual `fetch` call.
-                    try {
-                        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate 2s delay
-                        const mockResponseText = `In response to your query about "${userMessage}", the data suggests... [This is a simulated AI response based on your question].`;
-                        this.addMessage('ai', mockResponseText);
-                    } catch (error) {
-                        console.error('Chat error:', error);
-                        this.addMessage('ai', 'Sorry, I cannot connect to the AI service right now. Please try again later.');
-                    } finally {
-                        this.isTyping = false;
-                    }
-                    // --- END MOCK API CALL ---
+                    // Reset textarea height
+                    this.$nextTick(() => {
+                        this.$refs.chatInput.style.height = 'auto';
+                    });
+                    
+                    // Simulate AI response
+                    this.simulateAIResponse(`I understand you're asking about: "${userMessage}". Let me analyze this based on your data and provide insights.`);
                 },
                 autoResize() {
                     this.$nextTick(() => {
