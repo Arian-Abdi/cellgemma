@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CellVision AI | Cell Painting Analysis Platform</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700&family=Google+Sans+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #456e97;
+            --primary-blue-dark: #0d47a1;
+            --primary-blue-light: #456e97;
+            --google-grey-50: #f8f9fa;
+            --google-grey-100: #f1f3f4;
+            --google-grey-200: #e8eaed;
+            --google-grey-300: #dadce0;
+            --google-grey-400: #bdc1c6;
+            --google-grey-500: #9aa0a6;
+            --google-grey-600: #80868b;
+            --google-grey-700: #5f6368;
+            --google-grey-800: #3c4043;
+            --google-grey-900: #202124;
+            --surface: #ffffff;
+            --surface-variant: #f8f9fa;
+            --border-light: #e8eaed;
+            --green-accent: #1b5e20;
+            --shadow-1: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+            --shadow-2: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
+            --shadow-3: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 1px 3px 0 rgba(60, 64, 67, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--google-grey-50);
+            color: var(--google-grey-900);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            height: 200px;
+            background: url('image.png') center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: var(--shadow-3);
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: white;
+            padding: 1.5rem 3rem;
+        }
+
+        .header-title {
+            font-family: 'Google Sans Display', sans-serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: -0.02em;
+        }
+
+        .header-subtitle {
+            font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+            opacity: 0.95;
+            font-weight: 400;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Demo Section */
+        .demo-section {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: var(--shadow-2);
+            margin-bottom: 2rem;
+        }
+
+        .demo-interface {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        /* Left Panel - Upload */
+        .upload-panel {
+            background: var(--surface-variant);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--google-grey-900);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--google-grey-300);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            cursor: pointer;
+            background: var(--surface);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-blue);
+            background: rgba(21, 101, 192, 0.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--google-grey-400);
+            transition: var(--transition);
+        }
+
+        .upload-zone:hover .upload-icon {
+            color: var(--primary-blue);
+        }
+
+        /* Form Section */
+        .form-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-light);
+            margin-top: auto;
+        }
+
+        .form-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--google-grey-900);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--google-grey-700);
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-family: 'Google Sans', sans-serif;
+            font-size: 0.875rem;
+            transition: var(--transition);
+            background: var(--surface);
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
+        }
+
+        .optional-fields {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .optional-fields.show {
+            display: block;
+        }
+
+        .toggle-optional {
+            background: none;
+            border: none;
+            color: var(--primary-blue);
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .toggle-optional:hover {
+            text-decoration: underline;
+        }
+
+        .analyze-button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-family: 'Google Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .analyze-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-3);
+        }
+
+        .analyze-button:disabled {
+            background: var(--google-grey-300);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Right Panel - Chatbot */
+        .chatbot-panel {
+            background: var(--surface-variant);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: var(--shadow-1);
+        }
+
+        .chat-status {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background: var(--surface);
+            max-height: 450px;
+        }
+
+        .chat-input-container {
+            padding: 1rem 1.5rem;
+            background: var(--surface);
+            border-top: 1px solid var(--border-light);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .chat-input-box {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            font-family: 'Google Sans', sans-serif;
+            font-size: 0.875rem;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+            transition: var(--transition);
+            background: var(--surface);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #2c2c2c;
+            box-shadow: 0 0 0 3px rgba(44, 44, 44, 0.1);
+        }
+
+        .send-button {
+            background: #2c2c2c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover {
+            background: #1a1a1a;
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            background: var(--google-grey-300);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .welcome-message {
+            background: var(--google-grey-100);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #2c2c2c;
+        }
+
+        .welcome-text {
+            color: var(--google-grey-700);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .question-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .question-btn {
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Google Sans', sans-serif;
+            font-size: 0.875rem;
+            color: var(--google-grey-700);
+        }
+
+        .question-btn:hover {
+            background: var(--google-grey-50);
+            border-color: #2c2c2c;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-1);
+        }
+
+        .question-icon {
+            background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .chat-response {
+            background: var(--primary-blue);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            max-width: 85%;
+            align-self: flex-end;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .ai-response {
+            background: var(--google-grey-100);
+            color: var(--google-grey-800);
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            max-width: 85%;
+            align-self: flex-start;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-left: 4px solid #2c2c2c;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .demo-interface {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .main-container {
+                padding: 2rem 1rem;
+            }
+
+            .upload-panel, .chatbot-panel {
+                height: auto;
+                min-height: 500px;
+            }
+
+            .chat-container {
+                min-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                height: 150px;
+            }
+
+            .header-content {
+                padding: 1rem 2rem;
+            }
+
+            .demo-section {
+                padding: 2rem 1rem;
+            }
+
+            .upload-panel, .chatbot-panel {
+                padding: 1.5rem;
+            }
+
+            .upload-zone {
+                padding: 2rem 1rem;
+            }
+
+            .upload-icon {
+                font-size: 4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .header-subtitle {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--google-grey-400);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">CellVision AI</h1>
+                <p class="header-subtitle">
+                    Advanced Cell Painting Analysis Platform<br>
+                    Powered by Google MedGemma
+                </p>
+            </div>
+        </header>
+
+        <!-- Main Demo Section -->
+        <div class="main-container">
+            <section class="demo-section animate-fade-in">
+                <div class="demo-interface">
+                    
+                    <!-- Left Panel: Upload & Input -->
+                    <div class="upload-panel">
+                        <h2 class="panel-title">
+                            <span class="material-icons">upload_file</span>
+                            Upload Cell Painting Data
+                        </h2>
+                        
+                        <!-- File Upload -->
+                        <div class="upload-zone" @click="triggerFileUpload">
+                            <input ref="fileInput" type="file" style="display: none;" @change="handleFileUpload" accept=".tiff,.tif,.png,.jpg,.jpeg">
+                            <div class="upload-icon">
+                                <span class="material-icons">cloud_upload</span>
+                            </div>
+                        </div>
+
+                        <!-- Compound Information Form -->
+                        <div class="form-section">
+                            <h3 class="form-title">
+                                <span class="material-icons">science</span>
+                                Compound Information
+                            </h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Compound Name / ID</label>
+                                <input v-model="compoundName" type="text" class="form-input" 
+                                       placeholder="e.g., Staurosporine, DMSO Control, SAN-2024-001">
+                            </div>
+
+                            <button @click="showOptional = !showOptional" class="toggle-optional">
+                                <span class="material-icons">{{ showOptional ? 'expand_less' : 'expand_more' }}</span>
+                                {{ showOptional ? 'Hide' : 'Show' }} optional fields
+                            </button>
+
+                            <div class="optional-fields" :class="{ show: showOptional }">
+                                <div class="form-group">
+                                    <label class="form-label">Cell Line (Optional)</label>
+                                    <input v-model="cellLine" type="text" class="form-input" 
+                                           placeholder="e.g., U-2 OS, HeLa, A549">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Concentration (Optional)</label>
+                                    <input v-model="concentration" type="text" class="form-input" 
+                                           placeholder="e.g., 10 μM, 100 nM">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Incubation Time (Optional)</label>
+                                    <input v-model="incubationTime" type="text" class="form-input" 
+                                           placeholder="e.g., 24 hours, 48 hrs">
+                                </div>
+                            </div>
+                            
+                            <button @click="startAnalysis" :disabled="!canAnalyze" class="analyze-button">
+                                <span class="material-icons" v-if="!isAnalyzing">psychology</span>
+                                <span class="material-icons" v-if="isAnalyzing" style="animation: spin 1s linear infinite;">autorenew</span>
+                                {{ analyzeButtonText }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: AI Chatbot -->
+                    <div class="chatbot-panel">
+                        <h2 class="panel-title">
+                            <span class="material-icons">smart_toy</span>
+                            AI Research Assistant
+                        </h2>
+                        
+                        <div class="chat-container">
+                            <div class="chat-header">
+                                <span class="material-icons">psychology</span>
+                                <div>
+                                    <div style="font-weight: 600;">MedGemma AI</div>
+                                    <div style="font-size: 0.75rem; opacity: 0.9; display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="chat-status"></div>
+                                        Ready to analyze your data
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-messages" ref="chatMessages">
+                                <div class="welcome-message">
+                                    <p class="welcome-text">
+                                        👋 Welcome! I'm your AI research assistant. 
+                                        Upload your cell painting data and I'll help you analyze your results.
+                                    </p>
+                                </div>
+                                
+                                <div class="question-options">
+                                    <p style="font-size: 0.875rem; color: var(--google-grey-600); margin-bottom: 1rem;">
+                                        Ask me about your analysis:
+                                    </p>
+                                    
+                                    <button class="question-btn" @click="askQuestion('moa')">
+                                        <div class="question-icon">
+                                            <span class="material-icons">gps_fixed</span>
+                                        </div>
+                                        <div>
+                                            <strong>What's the primary mechanism of action?</strong><br>
+                                            <span style="color: var(--google-grey-500);">Identify the most likely biological target</span>
+                                        </div>
+                                    </button>
+                                    
+                                    <button class="question-btn" @click="askQuestion('literature')">
+                                        <div class="question-icon">
+                                            <span class="material-icons">auto_stories</span>
+                                        </div>
+                                        <div>
+                                            <strong>Find relevant literature evidence</strong><br>
+                                            <span style="color: var(--google-grey-500);">Search biomedical databases and publications</span>
+                                        </div>
+                                    </button>
+                                    
+                                    <button class="question-btn" @click="askQuestion('hypothesis')">
+                                        <div class="question-icon">
+                                            <span class="material-icons">lightbulb</span>
+                                        </div>
+                                        <div>
+                                            <strong>Generate research hypotheses</strong><br>
+                                            <span style="color: var(--google-grey-500);">AI-powered testable research directions</span>
+                                        </div>
+                                    </button>
+                                </div>
+                                
+                                <!-- Chat Messages -->
+                                <div v-for="message in chatMessages" :key="message.id" 
+                                     :class="message.type === 'user' ? 'chat-response' : 'ai-response'">
+                                    {{ message.text }}
+                                </div>
+                                
+                                <!-- Typing Indicator -->
+                                <div v-if="isTyping" class="ai-response">
+                                    <div class="typing-indicator">
+                                        <div class="typing-dot"></div>
+                                        <div class="typing-dot"></div>
+                                        <div class="typing-dot"></div>
+                                        <span style="margin-left: 0.5rem; color: var(--google-grey-500);">AI is thinking...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-input-container">
+                                <div class="chat-input-box">
+                                    <textarea 
+                                        v-model="userInput" 
+                                        @keydown.enter.prevent="sendMessage"
+                                        @input="autoResize"
+                                        ref="chatInput"
+                                        class="chat-input" 
+                                        placeholder="Ask me anything about your analysis..."
+                                        rows="1"></textarea>
+                                    <button 
+                                        @click="sendMessage" 
+                                        :disabled="!userInput.trim()"
+                                        class="send-button">
+                                        <span class="material-icons">send</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    compoundName: '',
+                    cellLine: '',
+                    concentration: '',
+                    incubationTime: '',
+                    isAnalyzing: false,
+                    isTyping: false,
+                    hasUploadedFile: false,
+                    showOptional: false,
+                    chatMessages: [],
+                    messageIdCounter: 0,
+                    userInput: ''
+                };
+            },
+            computed: {
+                canAnalyze() {
+                    return this.compoundName.trim() !== '' && this.hasUploadedFile;
+                },
+                analyzeButtonText() {
+                    if (this.isAnalyzing) return 'Analyzing...';
+                    if (!this.hasUploadedFile) return 'Upload file first';
+                    return 'Start Analysis';
+                }
+            },
+            methods: {
+                triggerFileUpload() {
+                    this.$refs.fileInput.click();
+                },
+                handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.hasUploadedFile = true;
+                        this.addMessage('user', `Uploaded: ${file.name}`);
+                        this.simulateAIResponse(`Great! I've received your file "${file.name}". Please fill in the compound information and start the analysis.`);
+                    }
+                },
+                startAnalysis() {
+                    if (!this.canAnalyze) return;
+                    
+                    this.isAnalyzing = true;
+                    this.addMessage('user', `Starting analysis for: ${this.compoundName}`);
+                    
+                    setTimeout(() => {
+                        this.isAnalyzing = false;
+                        this.simulateAIResponse(`Analysis complete for ${this.compoundName}! I can now answer questions about your results. What would you like to know?`);
+                    }, 3000);
+                },
+                askQuestion(type) {
+                    const questions = {
+                        moa: "What's the primary mechanism of action?",
+                        literature: "Find relevant literature evidence",
+                        hypothesis: "Generate research hypotheses"
+                    };
+                    
+                    const responses = {
+                        moa: "Based on the cell painting analysis, the compound appears to target the microtubule network, showing similar morphological changes to known tubulin inhibitors. The primary mechanism likely involves disruption of microtubule dynamics.",
+                        literature: "I found 23 relevant publications in PubMed. Key studies include work by Smith et al. (2023) on similar compounds and their effects on cell morphology. Would you like me to summarize the most relevant findings?",
+                        hypothesis: "Based on the analysis, I suggest testing: 1) Dose-response curves to determine IC50, 2) Time-course studies to identify optimal treatment duration, 3) Combination studies with known microtubule stabilizers."
+                    };
+                    
+                    this.addMessage('user', questions[type]);
+                    this.simulateAIResponse(responses[type]);
+                },
+                addMessage(type, text) {
+                    this.chatMessages.push({
+                        id: this.messageIdCounter++,
+                        type: type,
+                        text: text
+                    });
+                    this.$nextTick(() => {
+                        this.scrollToBottom();
+                    });
+                },
+                simulateAIResponse(response) {
+                    this.isTyping = true;
+                    setTimeout(() => {
+                        this.isTyping = false;
+                        this.addMessage('ai', response);
+                    }, 1500);
+                },
+                scrollToBottom() {
+                    const chatMessages = this.$refs.chatMessages;
+                    if (chatMessages) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                },
+                sendMessage() {
+                    if (!this.userInput.trim()) return;
+                    
+                    this.addMessage('user', this.userInput);
+                    const userMessage = this.userInput;
+                    this.userInput = '';
+                    
+                    // Reset textarea height
+                    this.$nextTick(() => {
+                        this.$refs.chatInput.style.height = 'auto';
+                    });
+                    
+                    // Simulate AI response
+                    this.simulateAIResponse(`I understand you're asking about: "${userMessage}". Let me analyze this based on your data and provide insights.`);
+                },
+                autoResize() {
+                    this.$nextTick(() => {
+                        const textarea = this.$refs.chatInput;
+                        textarea.style.height = 'auto';
+                        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
