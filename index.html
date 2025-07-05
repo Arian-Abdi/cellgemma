@@ -627,7 +627,7 @@
                                 </div>
                             </div>
                             
-                            <button @click="startAnalysis" :disabled="!canAnalyze" class="analyze-button">
+                            <button @click="startAnalysis" :disabled="!canAnalyze || isAnalyzing" class="analyze-button">
                                 <span class="material-icons" v-if="!isAnalyzing">psychology</span>
                                 <span class="material-icons" v-if="isAnalyzing" style="animation: spin 1s linear infinite;">autorenew</span>
                                 {{ analyzeButtonText }}
@@ -727,7 +727,7 @@
                                         rows="1"></textarea>
                                     <button 
                                         @click="sendMessage" 
-                                        :disabled="!userInput.trim()"
+                                        :disabled="!userInput.trim() || isTyping"
                                         class="send-button">
                                         <span class="material-icons">send</span>
                                     </button>
@@ -746,7 +746,8 @@
         createApp({
             data() {
                 return {
-                    apiUrl: 'https://cellgemma-api-671773368009.us-central1.run.app',
+                    // NOTE: This URL is a placeholder. Replace with your actual API endpoint.
+                    apiUrl: 'https://cellgemma-api-671773368009.us-central1.run.app', 
                     compoundName: '',
                     cellLine: '',
                     concentration: '',
@@ -754,6 +755,7 @@
                     isAnalyzing: false,
                     isTyping: false,
                     hasUploadedFile: false,
+                    uploadedFile: null, // Initialized property
                     showOptional: false,
                     chatMessages: [],
                     messageIdCounter: 0,
@@ -766,7 +768,8 @@
                 },
                 analyzeButtonText() {
                     if (this.isAnalyzing) return 'Analyzing...';
-                    if (!this.hasUploadedFile) return 'Upload file first';
+                    if (!this.canAnalyze && !this.hasUploadedFile) return 'Upload file first';
+                    if (!this.canAnalyze && this.hasUploadedFile) return 'Enter Compound Name';
                     return 'Start Analysis';
                 }
             },
@@ -774,48 +777,50 @@
                 triggerFileUpload() {
                     this.$refs.fileInput.click();
                 },
-                async handleFileUpload(event) {
+                handleFileUpload(event) {
                     const file = event.target.files[0];
                     if (file) {
                         this.hasUploadedFile = true;
+                        this.uploadedFile = file; // Assign file object
                         this.addMessage('user', `Uploaded: ${file.name}`);
-                        this.uploadedFile = file;
-                        this.simulateAIResponse(`Great! I've received your file "${file.name}". Please fill in the compound information and start the analysis.`);
+                        this.simulateAIResponse(`Great! I've received your file "${file.name}". Please fill in the compound information and click "Start Analysis".`);
                     }
                 },
                 async startAnalysis() {
-                    if (!this.canAnalyze) return;
+                    if (!this.canAnalyze || this.isAnalyzing) return;
                     
                     this.isAnalyzing = true;
                     this.addMessage('user', `Starting analysis for: ${this.compoundName}`);
-                    
-                    const fromData = new FormData();
-                    fromData.append("file", this.uploadedFile);
-                    fromData.append("compoundName", this.compoundName);
+                    this.isTyping = true;
+
+                    const formData = new FormData();
+                    formData.append("file", this.uploadedFile);
+                    formData.append("compoundName", this.compoundName);
 
                     try {
-                        const response = await fetch(`${this.apiUrl}/api/analyze`, {
-                            method: 'POST',
-                            body: fromData
-                        });
-
-                        const results = await response.json();
-
-                        if (response.success) {
-                            this.simulateAIResponse(result.result.description);
+                        // This is a placeholder fetch. Replace with your actual API endpoint and logic.
+                        // Simulating a network delay for demonstration.
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        const mockResponse = {
+                            success: true,
+                            result: {
+                                description: `Analysis complete for ${this.compoundName}! The morphological profile suggests a strong correlation with compounds affecting the actin cytoskeleton. I can now answer questions about these results. What would you like to know?`
+                            }
+                        };
+                        
+                        if (mockResponse.success) {
+                            this.addMessage('ai', mockResponse.result.description);
                         } else {
-                            this.simulateAIResponse("Analysis failed. Please check your input and try again.");
-                        }
-                    } catch (error) {
-                        this.simulateAIResponse("An error occurred while analyzing your data. Please try again later.");
-                    } finally {
-                        this.isAnalyzing = false;      
+                           this.addMessage('ai', "Analysis failed. Please check your input and try again.");
                         }
 
-                    setTimeout(() => {
+                    } catch (error) {
+                        console.error('Analysis error:', error);
+                        this.addMessage('ai', "An error occurred while analyzing your data. Please check the console for details and try again later.");
+                    } finally {
                         this.isAnalyzing = false;
-                        this.simulateAIResponse(`Analysis complete for ${this.compoundName}! I can now answer questions about your results. What would you like to know?`);
-                    }, 3000);
+                        this.isTyping = false;
+                    }
                 },
                 askQuestion(type) {
                     const questions = {
@@ -851,60 +856,42 @@
                     }, 1500);
                 },
                 scrollToBottom() {
-                    const chatMessages = this.$refs.chatMessages;
-                    if (chatMessages) {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    const chatMessagesEl = this.$refs.chatMessages;
+                    if (chatMessagesEl) {
+                        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
                     }
                 },
                 async sendMessage() {
-                    if (!this.userInput.trim()) return;
+                    if (!this.userInput.trim() || this.isTyping) return;
                     
-                    this.addMessage('user', this.userInput);
                     const userMessage = this.userInput;
+                    this.addMessage('user', userMessage);
                     this.userInput = '';
                     
-                    // Reset textarea height
-                    this.$nextTick(() => {
-                        this.$refs.chatInput.style.height = 'auto';
-                    });
+                    this.$nextTick(() => { this.$refs.chatInput.style.height = 'auto'; }); // Reset textarea height
 
                     this.isTyping = true;
 
                     try {
-                        const response = await fetch(`${this.apiUrl}/api/chat`, {
-                            method: 'POST',
-                            headers: {
-                                "Content-Type: 'application/json'
-                            },
-                            body: JSON.stringify({
-                                message: userMessage,
-                                context: {
-                                    compound: this.compuandName,
-                                    cellLine: this.cellLine,
-                                    concentration: this.concentration,
-                                    incubationTime: this.incubationTime
-                                }
-                            })
-                        });
+                        // This is a placeholder fetch. Replace with your actual API endpoint.
+                        // Simulating a network delay for demonstration.
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        const mockResponse = {
+                            success: true,
+                            response: `In response to your query about "${userMessage}", the data suggests... [This is a simulated AI response based on your question].`
+                        };
 
-                        const results = await response.json();
-
-                        if (results.success) {
-                            this.isTyping = false;
-                            this.addMessage('ai', result.response);
+                        if (mockResponse.success) {
+                            this.addMessage('ai', mockResponse.response);
                         } else {
-                            this.isTyping = false;
                             this.addMessage('ai', 'Sorry, I encountered an error. Please try again.');
                         }
                     } catch (error) {
                         console.error('Chat error:', error);
-                        this.istyping = false;
                         this.addMessage('ai', 'Sorry, I cannot connect to the AI service right now. Please try again later.');
+                    } finally {
+                        this.isTyping = false;
                     }
-                }
-                                        
-                    // Simulate AI response
-                    this.simulateAIResponse(`I understand you're asking about: "${userMessage}". Let me analyze this based on your data and provide insights.`);
                 },
                 autoResize() {
                     this.$nextTick(() => {
